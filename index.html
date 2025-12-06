@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Douyin Downloader HQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Warna Khas Douyin (Hitam - Merah Neon) */
+        .douyin-gradient {
+            background: linear-gradient(90deg, #1C1C1C, #FE2C55);
+        }
+        .glass-effect {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+
+    <div class="absolute top-0 right-0 w-96 h-96 bg-red-600 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+    <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-900 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+
+    <div class="w-full max-w-md glass-effect rounded-2xl shadow-2xl relative z-10">
+        
+        <div class="p-8 text-center border-b border-gray-800">
+            <h1 class="text-4xl font-extrabold mb-1 tracking-tighter italic">
+                <span class="text-white">Dou</span><span class="text-[#FE2C55]">yin</span>
+            </h1>
+            <p class="text-gray-400 text-xs uppercase tracking-widest">Original Quality Downloader</p>
+        </div>
+
+        <div class="p-8 space-y-5">
+            <div class="relative group">
+                <input type="text" id="urlInput" 
+                    class="w-full bg-[#121212] border border-gray-700 text-white rounded-lg py-4 pl-4 pr-12 focus:outline-none focus:border-[#FE2C55] focus:ring-1 focus:ring-[#FE2C55] transition" 
+                    placeholder="Tempel link v.douyin.com...">
+                <button onclick="pasteClipboard()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">
+                    <i class="fas fa-paste"></i>
+                </button>
+            </div>
+
+            <button onclick="fetchVideoInfo()" id="processBtn" 
+                class="w-full bg-[#FE2C55] hover:bg-red-600 text-white font-bold py-4 rounded-lg shadow-[0_0_20px_rgba(254,44,85,0.3)] transform transition active:scale-95 flex items-center justify-center gap-2">
+                <span>DOWNLOAD HQ</span>
+                <i class="fas fa-bolt"></i>
+            </button>
+        </div>
+
+        <div id="loading" class="hidden px-8 pb-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-800 border-t-[#FE2C55]"></div>
+            <p class="text-gray-500 mt-3 text-xs animate-pulse">Menghubungkan ke server Douyin...</p>
+        </div>
+
+        <div id="resultCard" class="hidden bg-[#121212] border-t border-gray-800">
+            <div class="p-6">
+                <div class="flex gap-4 mb-6">
+                    <img id="thumb" src="" class="w-24 h-32 object-cover rounded bg-gray-800 flex-shrink-0">
+                    
+                    <div class="flex flex-col justify-center overflow-hidden">
+                        <h3 id="author" class="font-bold text-white text-lg truncate">User</h3>
+                        <p id="desc" class="text-gray-400 text-xs line-clamp-2 mt-1">Deskripsi...</p>
+                        <div class="mt-3 text-[#FE2C55] text-xs font-mono">
+                            <i class="fas fa-star"></i> ORIGINAL QUALITY
+                        </div>
+                    </div>
+                </div>
+
+                <a id="btnDownload" href="#" target="_blank" 
+                   class="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded text-center block transition">
+                    <i class="fas fa-download mr-2"></i> Download Video
+                </a>
+            </div>
+        </div>
+
+        <div id="errorMsg" class="hidden p-4 bg-red-900/20 text-red-400 text-xs text-center border-t border-red-900/30">
+            <span id="errorText">Error.</span>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-gray-600 text-[10px] uppercase tracking-widest">
+        Douyin Downloader v1.0
+    </footer>
+
+    <script>
+        // PENTING: GANTI URL INI JIKA KAMU BUAT PROJECT RENDER BARU
+        // Kalau pakai project Render yang lama, biarkan saja.
+        const API_BASE = "https://mesin-website-rizal-ke-2.onrender.com"; 
+
+        async function pasteClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('urlInput').value = text;
+            } catch (err) {}
+        }
+
+        async function fetchVideoInfo() {
+            const url = document.getElementById('urlInput').value;
+            const loading = document.getElementById('loading');
+            const resultCard = document.getElementById('resultCard');
+            const errorMsg = document.getElementById('errorMsg');
+            const processBtn = document.getElementById('processBtn');
+
+            resultCard.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+
+            if (!url) return;
+
+            loading.classList.remove('hidden');
+            processBtn.disabled = true;
+            processBtn.classList.add('opacity-50');
+
+            try {
+                // Panggil endpoint backend
+                const response = await fetch(`${API_BASE}/api/info?url=${encodeURIComponent(url)}`);
+                const json = await response.json();
+
+                if (!response.ok || !json.success) {
+                    throw new Error(json.error || "Gagal. Pastikan link Douyin benar.");
+                }
+
+                const data = json.data;
+
+                // Mapping Data Douyin
+                document.getElementById('thumb').src = data.cover;
+                document.getElementById('author').innerText = data.author;
+                document.getElementById('desc').innerText = data.title;
+                
+                // Set Link Download
+                // Backend Douyin kita sudah return RedirectResponse ke file HD
+                document.getElementById('btnDownload').href = `${API_BASE}/api/download?url=${encodeURIComponent(url)}`;
+
+                resultCard.classList.remove('hidden');
+
+            } catch (error) {
+                document.getElementById('errorText').innerText = error.message;
+                errorMsg.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                processBtn.disabled = false;
+                processBtn.classList.remove('opacity-50');
+            }
+        }
+    </script>
+</body>
+</html>
